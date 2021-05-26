@@ -101,7 +101,7 @@ showCity city =
 updatePopulations :: [City] -> [Int] -> [City]
 updatePopulations ps ms = zipWith f ps ms
                             where
-                            f p m = p {populationPerYear = m : init (populationPerYear p)}
+                            f p m = p {populationPerYear = m :  (populationPerYear p)}
 
 
 
@@ -118,6 +118,7 @@ demo :: (Eq a, Num a) => a -> IO ()
 demo 1  = putStrLn (citiesToString testData)
 demo 2 = putStrLn (pop testData "Madrid" 2)
 demo 3 = putStrLn (showCities testData)
+demo 4 = putStrLn (showCities(updatePopulations testData [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000]))
 
 --
 
