@@ -15,7 +15,7 @@ import Text.PrettyPrint
 --
 -- Types
 --
-data City = City String Int Int [Int]
+data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
     deriving (Show, Read)
 
 testData :: [City]
@@ -58,16 +58,10 @@ showCities [] = ""
 showCities [x] = showCity x
 showCities (x:xs) = showCity x ++ "\n" ++ showCities xs
 
-
 citiesToString :: [City] -> String
 citiesToString [] = ""
 citiesToString [x] = getCity  x
 citiesToString (x:xs) = getCity x ++ "\n" ++ citiesToString xs
-
-
-
-
-
 
 pop :: [City] -> String -> Int -> String
 pop cities cityName year =
@@ -104,6 +98,10 @@ showCity city =
         ++ " | "
         ++ show (population city)
 
+updatePopulations :: [City] -> [Int] -> [City]
+updatePopulations ps ms = zipWith f ps ms
+                            where
+                            f p m = p {populationPerYear = m : init (populationPerYear p)}
 
 
 
@@ -120,6 +118,7 @@ demo :: (Eq a, Num a) => a -> IO ()
 demo 1  = putStrLn (citiesToString testData)
 demo 2 = putStrLn (pop testData "Madrid" 2)
 demo 3 = putStrLn (showCities testData)
+
 --
 
 
