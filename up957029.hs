@@ -5,18 +5,23 @@
 --
 
 import Data.List
-import Data.List (intercalate)
+
+
+
 import Data.Map
+
+
 import Data.Ord
 import Data.String
-import Text.Printf
+import GHC.Base ((<|>))
 import Text.PrettyPrint
-
+import Text.PrettyPrint
+import Text.Printf
 --
 -- Types
---
 data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
-    deriving (Show, Read)
+--
+    deriving (Show, Read, Eq, Ord)
 
 testData :: [City]
 testData = [
@@ -34,35 +39,34 @@ testData = [
     City "Warsaw"       52  21    [1790, 1783, 1776, 1768]
     ]
 
+
+
 -- gets the city name
 getCity :: City -> String
 getCity (City name _ _ _ ) = name
-
+-- gets population list
 population :: City -> [Int]
-population (City _ _ _ pop ) = pop
-
+population (City _ _ _ pop ) =  pop
+-- gets the north degree 
 north :: City -> Int
 north (City _ n _ _ ) = n
-
-
+-- gets the east degree
 east :: City -> Int
 east (City _ _ e _) = e
 
-
-
-
-
-
+-- iii)
 showCities :: [City] -> String
 showCities [] = ""
-showCities [x] = showCity x
-showCities (x:xs) = showCity x ++ "\n" ++ showCities xs
+showCities [x] = showCity [x] x 
+showCities (x:xs) = showCity (x:xs) x ++ "\n" ++ showCities xs
 
+-- i)
 citiesToString :: [City] -> String
 citiesToString [] = ""
 citiesToString [x] = getCity  x
 citiesToString (x:xs) = getCity x ++ "\n" ++ citiesToString xs
 
+-- ii)
 pop :: [City] -> String -> Int -> String
 pop cities cityName year =
     intoString (findCity >>= getPopulation)
@@ -79,46 +83,90 @@ pop cities cityName year =
                 then Just  (ps !! year)
                 else Nothing
 
+-- helper function
 showPopulationList:: PrintfArg int => [int] -> String
 showPopulationList popList = intercalate "," $
                             Data.List.map (printf "%3d") popList
 
-
 formatList :: City -> String
 formatList (City a b c cs ) = a ++ "|" ++ show b ++ "|" ++ show c ++"|" ++ intercalate ", " (Data.List.map show cs)
 
+twoPop :: [City] -> String -> String
+twoPop (City name n e popul:rest) ctName
+    | ctName == name =  printf ( zeroP  ++ " "   ++  oneP) 
+    | ctName /= name = twoPop rest ctName
+    where zeroP = pop (City name n e popul:rest) name 0
+          oneP  = pop (City name n e popul:rest) name 1
 
-showCity :: City -> String
-showCity city = 
+
+twoPopData :: [City] -> String -> String
+twoPopData ((City name degN degE popList):rest) ctName
+    |  ctName == name = twoPop ((City name degN degE popList):rest) ctName
+    |  ctName /= name = twoPopData rest ctName
+
+
+
+-- helper function for question (iii) 
+showCity :: [City] -> City -> String
+showCity listOfCities city =
     getCity city
         ++" | "
         ++ show (north city)
         ++ " | "
         ++ show (east city)
         ++ " | "
-        ++ show (population city)
+        ++  (twoPopData listOfCities (getCity city))
 
+
+-- iv)
 updatePopulations :: [City] -> [Int] -> [City]
 updatePopulations ps ms = zipWith f ps ms
-                            where
-                            f p m = p {populationPerYear = m :  (populationPerYear p)}
+    where
+    f p m = p {populationPerYear = m :  (populationPerYear p)}
 
 
 
 
+-- v)
+
+addCity :: [City] -> String -> Int -> Int ->[Int] -> [City]
+addCity listOfCities name n e popList =
+   sort (City name n e popList :  listOfCities)
 
 
+-- For a given city name, return a list of annual percentage population growth figures for
+--that city (i.e., the result list should begin with the percentage increase from last year’s
+--figure to this year’s; the second value should give the increase from two years ago to
+--last year, etc.). The list will include negative values for shrinking populations.
+
+yearlyIncrease :: [City] -> String -> [Double] 
+yearlyIncrease ((City name degN degE (x:xs)):rest) cityName
+    | cityName == name =  populationList xs x 
+    | otherwise = yearlyIncrease rest cityName 
+    
 
 
+populationList :: [Int] -> Int -> [Double]
+populationList [] year = []
+populationList (x:xs) year = ((fromIntegral (year - x)) / fromIntegral (x)) : populationList xs x
 
+--Given a location and a number, return the name of the closest city with a population
+--bigger than the number, or “no city” if there are no such cities; use Pythagoras’ theorem
+--to calculate the distance between locations (i.e. assume the world is flat!)
+
+closestCity :: [City] -> Int -> Int -> Int -> String
+closestCity ((City name degN degE (x:xs)):rest) n e
+    | 
 
 
 
 demo :: (Eq a, Num a) => a -> IO ()
 demo 1  = putStrLn (citiesToString testData)
 demo 2 = putStrLn (pop testData "Madrid" 2)
-demo 3 = putStrLn (showCities testData)
+demo 3 = putStrLn ((showCities testData))
 demo 4 = putStrLn (showCities(updatePopulations testData [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000]))
+demo 5 = putStrLn (showCities(addCity testData "Rio" 45 23 [3214, 3781]))
+demo 6 = putStrLn (show((yearlyIncrease testData "Madrid")))
 
 --
 
