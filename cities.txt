@@ -1,0 +1,14 @@
+   [
+    "Amsterdam"    52   5    
+    "Athens"       38  23    
+    "Berlin"       53  13   
+    "Brussels"     51   4    
+    "Bucharest"    44  26    
+    "London"       52   0    
+    "Madrid"       40   4    
+    "Paris"        49   2    
+    "Rome"         42  13    
+    "Sofia"        43  23    
+    "Vienna"       48  16    
+    "Warsaw"       52  21    
+   ]

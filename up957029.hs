@@ -9,14 +9,14 @@ import Data.List
 
 
 import Data.Map
-
-
 import Data.Ord
+
 import Data.String
 import GHC.Base ((<|>))
 import Text.PrettyPrint
 import Text.PrettyPrint
 import Text.Printf
+import Text.Read (readMaybe) 
 --
 -- Types
 data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
@@ -93,7 +93,7 @@ formatList (City a b c cs ) = a ++ "|" ++ show b ++ "|" ++ show c ++"|" ++ inter
 
 twoPop :: [City] -> String -> String
 twoPop (City name n e popul:rest) ctName
-    | ctName == name =  printf ( zeroP  ++ " "   ++  oneP) 
+    | ctName == name =  printf ( zeroP  ++ " "  ++  oneP) 
     | ctName /= name = twoPop rest ctName
     where zeroP = pop (City name n e popul:rest) name 0
           oneP  = pop (City name n e popul:rest) name 1
@@ -139,6 +139,8 @@ addCity listOfCities name n e popList =
 --figure to this year’s; the second value should give the increase from two years ago to
 --last year, etc.). The list will include negative values for shrinking populations.
 
+
+-- vi)
 yearlyIncrease :: [City] -> String -> [Double] 
 yearlyIncrease ((City name degN degE (x:xs)):rest) cityName
     | cityName == name =  populationList xs x 
@@ -150,23 +152,43 @@ populationList :: [Int] -> Int -> [Double]
 populationList [] year = []
 populationList (x:xs) year = ((fromIntegral (year - x)) / fromIntegral (x)) : populationList xs x
 
+-- vii)
+
 --Given a location and a number, return the name of the closest city with a population
 --bigger than the number, or “no city” if there are no such cities; use Pythagoras’ theorem
 --to calculate the distance between locations (i.e. assume the world is flat!)
 
+closestDistance :: [City] -> Int -> Int -> Int -> (Double,String) 
+closestDistance ((City name degN degE (x:xs)):rest) n e minPop
+    | x < minPop =  (closestDistance rest n e minPop)
+    | x >= minPop =
+    if distance n e degN degE < d
+    then (distance n e degN degE,name)
+    else (d, cityName)
+        where (d, cityName)  = (closestDistance rest n e minPop)
+closestDistance [] n e minPop = (100000000, "No city") 
+
+distance :: Int -> Int -> Int -> Int -> Double
+distance n1 e1 n2 e2 = sqrt(fromIntegral ((n1 - n2)^2 + (e1 - e2)^2))
+
 closestCity :: [City] -> Int -> Int -> Int -> String
-closestCity ((City name degN degE (x:xs)):rest) n e
-    | 
+closestCity listOfCities n e minPop = cityName
+    where (distance,cityName) = closestDistance listOfCities n e minPop 
+
+    
+
 
 
 
 demo :: (Eq a, Num a) => a -> IO ()
 demo 1  = putStrLn (citiesToString testData)
 demo 2 = putStrLn (pop testData "Madrid" 2)
-demo 3 = putStrLn ((showCities testData))
+demo 3 = putStrLn (showCities testData)
 demo 4 = putStrLn (showCities(updatePopulations testData [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000]))
-demo 5 = putStrLn (showCities(addCity testData "Rio" 45 23 [3214, 3781]))
-demo 6 = putStrLn (show((yearlyIncrease testData "Madrid")))
+demo 5 = putStrLn (showCities(addCity testData "LA" 45 23 [3214, 3781, 4000]))
+demo 6 = putStrLn (show((yearlyIncrease testData "London")))
+demo 7 = putStr (closestCity testData 34 42 3567)
+
 
 --
 
@@ -202,4 +224,91 @@ writeAt position text = do
 
 --
 -- Your user interface (and loading/saving) code goes here
+--data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
+
+parseCities :: String -> [City]
+parseCities fileContents = do
+    [city', northDeg', southDeg' ] <- words <$> lines fileContents
+    Just northDeg'' <- return (readMaybe northDeg')
+    Just southDeg'' <- return (readMaybe southDeg')
+    return (City { city = city', northDeg = northDeg'',southDeg  = southDeg'', populationPerYear = [] })
+
+loadCities :: IO [City]
+loadCities = do
+    cities <- parseCities <$> readFile "cities.txt"
+    --contents <- readFile "cities.txt" 
+    return cities
+
+startMenu :: [City] -> IO ()
+startMenu citiesList   = do
+    putStrLn ""  
+    putStrLn "Enter a number that corresponds to the desired choice: "
+    putStrLn "1: Return a list of names of all cities."
+    putStrLn "2: Return the population of a city with the given year."
+    putStrLn "3: Return all data as a single string in 5 columns."
+    putStrLn "4: Update the data with a list of new populations."
+    putStrLn "5: Add a new city."
+    putStrLn "6: return a list of annual percentage population growth figures."
+    putStrLn "7: Return the closest city"
+    putStrLn "0: Close"
+    option <- getLine
+    executeOption option citiesList
+
+executeOption :: String -> [City] -> IO ()
+executeOption "1" citiesList = do
+  putStrLn (citiesToString citiesList)
+  startMenu citiesList
+
+executeOption "2" citiesList = do
+    putStrLn "What city?"
+    city <- getLine
+    let cityName = read city :: String
+    putStrLn "What year do you want to see the population?"
+    populationInt <- getLine
+    let popFigure = read populationInt :: Int
+    putStrLn (pop citiesList cityName popFigure)
+    startMenu citiesList
+
+executeOption "3" citiesList = do
+    putStrLn (showCities citiesList)
+    startMenu citiesList
+
+executeOption "4" citiesList = do
+    putStrLn "Please enter 10 population figures in a list to update the population of all cities"
+    popLists <- getLine
+    let listOfPops = read popLists :: [Int]
+    putStrLn (showCities(updatePopulations citiesList listOfPops))
+    startMenu citiesList
+
+executeOption "5" citiesList = do
+    putStrLn "Please enter a city name"
+    nameStr <- getLine
+    let nameOfCity = read nameStr :: String
+    putStrLn "Enter north cords"
+    northCords <- getLine
+    let n = read northCords :: Int
+    putStrLn "Please enter east cords"
+    eastCords <- getLine
+    let e = read eastCords :: Int
+    putStrLn "Please enter a population list"
+    populationL <- getLine
+    let listPops = read populationL :: [Int]
+    putStrLn (showCities(addCity citiesList nameOfCity n e listPops))
+    startMenu citiesList
+
+executeOption "6" citiesList = do
+    putStrLn "Please enter the city you want to check the yearly increase on."
+    cityChoice <- getLine
+    let cityName = read cityChoice :: String
+    putStrLn (show((yearlyIncrease testData cityName)))
+    startMenu citiesList
+
+main :: IO ()
+main = do
+    citiesList <- loadCities
+    putStrLn "City data:\n"
+    putStrLn (citiesToString citiesList)
+    startMenu citiesList
+
+
 --
