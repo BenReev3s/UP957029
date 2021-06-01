@@ -76,15 +76,15 @@ pop cities cityName year =
 -- helper functions for fomratting populations in iii)
 formatPop :: [City] -> String -> String
 formatPop (City name n e popul:rest) cityName
-    | cityName == name =  printf ( zeroP  ++ " "  ++  oneP)
+    | cityName == name =  printf ( first  ++ " " ++  second)
     | cityName /= name = formatPop rest cityName
-    where zeroP = pop (City name n e popul:rest) name 0
-          oneP  = pop (City name n e popul:rest) name 1
+    where first = pop (City name n e popul:rest) name 0
+          second  = pop (City name n e popul:rest) name 1
 
 
 twoYears :: [City] -> String -> String
-twoYears ((City name degN degE popList):rest) cityName
-    |  cityName == name = formatPop (City name degN degE popList:rest) cityName
+twoYears ((City name n e popList):rest) cityName
+    |  cityName == name = formatPop (City name n e popList:rest) cityName
     |  cityName /= name = twoYears rest cityName
 
 -- helper function for creating columns
