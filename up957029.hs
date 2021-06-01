@@ -293,6 +293,20 @@ executeOption "6" citiesList = do
     print (yearlyIncrease testData cityName)
     startMenu citiesList
 
+executeOption "7" citiesList = do
+    putStrLn "Please enter the north coordinates. "
+    n <- getLine
+    let north = read n :: Int
+    putStrLn "Please enter the south Coordinates"
+    s <- getLine
+    let south = read s :: Int
+    putStrLn "Please enter the mininum population. "
+    minPop <- getLine
+    let minPopulation = read minPop :: Int
+    putStrLn (closestCity citiesList north south minPopulation)
+
+
+
 main :: IO ()
 main = do
     citiesList <- loadCities
