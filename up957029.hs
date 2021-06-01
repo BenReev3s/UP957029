@@ -92,7 +92,7 @@ cityToString :: [City] -> City -> String
 cityToString listOfCities (City name h w populations) =
     printf "%-9s" name ++ " "                    ++
     printf "%9d " h ++ printf "%9.0d " w  ++ 
-    show(twoYears listOfCities (getCity (City name h w populations)))
+    twoYears listOfCities (getCity (City name h w populations))
 
 -- iii)
 showCities :: [City] -> String
