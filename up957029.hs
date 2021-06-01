@@ -8,19 +8,15 @@ import Data.List
 
 
 
-import Data.Map
-import Data.Ord
 
-import Data.String
-import GHC.Base ((<|>))
-import Text.PrettyPrint
-import Text.PrettyPrint
 import Text.Printf
-import Text.Read (readMaybe) 
+
+
 --
 -- Types
 data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
---
+
+
     deriving (Show, Read, Eq, Ord)
 
 testData :: [City]
@@ -57,8 +53,8 @@ east (City _ _ e _) = e
 -- iii)
 showCities :: [City] -> String
 showCities [] = ""
-showCities [x] = showCity [x] x 
-showCities (x:xs) = showCity (x:xs) x ++ "\n" ++ showCities xs
+showCities [x] = cityToString [x] x
+showCities (x:xs) = cityToString (x:xs) x ++ "\n" ++ showCities xs
 
 -- i)
 citiesToString :: [City] -> String
@@ -84,45 +80,33 @@ pop cities cityName year =
                 else Nothing
 
 -- helper function
-showPopulationList:: PrintfArg int => [int] -> String
-showPopulationList popList = intercalate "," $
-                            Data.List.map (printf "%3d") popList
 
-formatList :: City -> String
-formatList (City a b c cs ) = a ++ "|" ++ show b ++ "|" ++ show c ++"|" ++ intercalate ", " (Data.List.map show cs)
 
-twoPop :: [City] -> String -> String
-twoPop (City name n e popul:rest) ctName
-    | ctName == name =  printf ( zeroP  ++ " "  ++  oneP) 
-    | ctName /= name = twoPop rest ctName
+
+formatPop :: [City] -> String -> String
+formatPop (City name n e popul:rest) cityName
+    | cityName == name =  printf ( zeroP  ++ " "  ++  oneP)
+    | cityName /= name = formatPop rest cityName
     where zeroP = pop (City name n e popul:rest) name 0
           oneP  = pop (City name n e popul:rest) name 1
 
 
-twoPopData :: [City] -> String -> String
-twoPopData ((City name degN degE popList):rest) ctName
-    |  ctName == name = twoPop ((City name degN degE popList):rest) ctName
-    |  ctName /= name = twoPopData rest ctName
+onlyTwoPop :: [City] -> String -> String
+onlyTwoPop ((City name degN degE popList):rest) ctName
+    |  ctName == name = formatPop (City name degN degE popList:rest) ctName
+    |  ctName /= name = onlyTwoPop rest ctName
+
 
 
 
 -- helper function for question (iii) 
-showCity :: [City] -> City -> String
-showCity listOfCities city =
-    getCity city
-        ++" | "
-        ++ show (north city)
-        ++ " | "
-        ++ show (east city)
-        ++ " | "
-        ++  (twoPopData listOfCities (getCity city))
 
 
 -- iv)
 updatePopulations :: [City] -> [Int] -> [City]
-updatePopulations ps ms = zipWith f ps ms
+updatePopulations = zipWith f
     where
-    f p m = p {populationPerYear = m :  (populationPerYear p)}
+    f p m = p {populationPerYear = m :  populationPerYear p}
 
 
 
@@ -139,18 +123,26 @@ addCity listOfCities name n e popList =
 --figure to this year’s; the second value should give the increase from two years ago to
 --last year, etc.). The list will include negative values for shrinking populations.
 
+cityToString :: [City] -> City -> String
+cityToString listOfCities (City name h w populations) =
+    printf "%-9s" name ++ " "                    ++
+    printf "%9d " h ++ printf "%9.0d " w  ++ 
+    show(onlyTwoPop listOfCities (getCity (City name h w populations)))
+
+
+
 
 -- vi)
-yearlyIncrease :: [City] -> String -> [Double] 
+yearlyIncrease :: [City] -> String -> [Double]
 yearlyIncrease ((City name degN degE (x:xs)):rest) cityName
-    | cityName == name =  populationList xs x 
-    | otherwise = yearlyIncrease rest cityName 
-    
+    | cityName == name =  populationList xs x
+    | otherwise = yearlyIncrease rest cityName
+
 
 
 populationList :: [Int] -> Int -> [Double]
 populationList [] year = []
-populationList (x:xs) year = ((fromIntegral (year - x)) / fromIntegral (x)) : populationList xs x
+populationList (x:xs) year = (fromIntegral (year - x) / fromIntegral x) : populationList xs x
 
 -- vii)
 
@@ -158,24 +150,24 @@ populationList (x:xs) year = ((fromIntegral (year - x)) / fromIntegral (x)) : po
 --bigger than the number, or “no city” if there are no such cities; use Pythagoras’ theorem
 --to calculate the distance between locations (i.e. assume the world is flat!)
 
-closestDistance :: [City] -> Int -> Int -> Int -> (Double,String) 
+closestDistance :: [City] -> Int -> Int -> Int -> (Double,String)
 closestDistance ((City name degN degE (x:xs)):rest) n e minPop
-    | x < minPop =  (closestDistance rest n e minPop)
+    | x < minPop =  closestDistance rest n e minPop
     | x >= minPop =
     if distance n e degN degE < d
     then (distance n e degN degE,name)
     else (d, cityName)
-        where (d, cityName)  = (closestDistance rest n e minPop)
-closestDistance [] n e minPop = (100000000, "No city") 
+        where (d, cityName)  = closestDistance rest n e minPop
+closestDistance [] n e minPop = (100000000, "No city")
 
 distance :: Int -> Int -> Int -> Int -> Double
 distance n1 e1 n2 e2 = sqrt(fromIntegral ((n1 - n2)^2 + (e1 - e2)^2))
 
 closestCity :: [City] -> Int -> Int -> Int -> String
 closestCity listOfCities n e minPop = cityName
-    where (distance,cityName) = closestDistance listOfCities n e minPop 
+    where (distance,cityName) = closestDistance listOfCities n e minPop
 
-    
+
 
 
 
@@ -186,8 +178,8 @@ demo 2 = putStrLn (pop testData "Madrid" 2)
 demo 3 = putStrLn (showCities testData)
 demo 4 = putStrLn (showCities(updatePopulations testData [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000]))
 demo 5 = putStrLn (showCities(addCity testData "LA" 45 23 [3214, 3781, 4000]))
-demo 6 = putStrLn (show((yearlyIncrease testData "London")))
-demo 7 = putStr (closestCity testData 34 42 3567)
+demo 6 = print (yearlyIncrease testData "London")
+demo 7 = putStr (closestCity testData 67 42 3567)
 
 
 --
@@ -225,23 +217,21 @@ writeAt position text = do
 --
 -- Your user interface (and loading/saving) code goes here
 --data City = City {city:: String, northDeg:: Int, southDeg:: Int, populationPerYear:: [Int]}
-
-parseCities :: String -> [City]
-parseCities fileContents = do
-    [city', northDeg', southDeg' ] <- words <$> lines fileContents
-    Just northDeg'' <- return (readMaybe northDeg')
-    Just southDeg'' <- return (readMaybe southDeg')
-    return (City { city = city', northDeg = northDeg'',southDeg  = southDeg'', populationPerYear = [] })
+saveCities :: [City] -> IO()
+saveCities citiesTestData =
+    writeFile "cities.txt" (show citiesTestData)
 
 loadCities :: IO [City]
 loadCities = do
-    cities <- parseCities <$> readFile "cities.txt"
-    --contents <- readFile "cities.txt" 
-    return cities
+  contents <- readFile "cities.txt"
+  return (read contents :: [City])
+
+
+
 
 startMenu :: [City] -> IO ()
-startMenu citiesList   = do
-    putStrLn ""  
+startMenu citiesList = do
+    putStrLn ""
     putStrLn "Enter a number that corresponds to the desired choice: "
     putStrLn "1: Return a list of names of all cities."
     putStrLn "2: Return the population of a city with the given year."
@@ -252,7 +242,7 @@ startMenu citiesList   = do
     putStrLn "7: Return the closest city"
     putStrLn "0: Close"
     option <- getLine
-    executeOption option citiesList
+    executeOption option testData
 
 executeOption :: String -> [City] -> IO ()
 executeOption "1" citiesList = do
@@ -300,14 +290,12 @@ executeOption "6" citiesList = do
     putStrLn "Please enter the city you want to check the yearly increase on."
     cityChoice <- getLine
     let cityName = read cityChoice :: String
-    putStrLn (show((yearlyIncrease testData cityName)))
+    print (yearlyIncrease testData cityName)
     startMenu citiesList
 
 main :: IO ()
 main = do
     citiesList <- loadCities
-    putStrLn "City data:\n"
-    putStrLn (citiesToString citiesList)
     startMenu citiesList
 
 
