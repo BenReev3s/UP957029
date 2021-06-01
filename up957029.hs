@@ -89,10 +89,10 @@ twoYears ((City name degN degE popList):rest) cityName
 
 -- helper function for creating columns
 cityToString :: [City] -> City -> String
-cityToString listOfCities (City name h w populations) =
+cityToString listOfCities (City name n e populations) =
     printf "%-9s" name ++ " "                    ++
-    printf "%9d " h ++ printf "%9.0d " w  ++ 
-    twoYears listOfCities (getCity (City name h w populations))
+    printf "%9d " e ++ printf "%9.0d " n  ++ 
+    twoYears listOfCities (getCity (City name n e populations))
 
 -- iii)
 showCities :: [City] -> String
@@ -185,8 +185,8 @@ loadCities = do
   contents <- readFile "cities.txt"
   return (read contents :: [City])
 
-startMenu :: [City] -> IO ()
-startMenu citiesList = do
+choices :: [City] -> IO ()
+choices citiesList = do
     putStrLn ""
     putStrLn "Enter a number that corresponds to the desired choice: "
     putStrLn "1: Return a list of names of all cities."
@@ -197,18 +197,18 @@ startMenu citiesList = do
     putStrLn "6: return a list of annual percentage population growth figures."
     putStrLn "7: Return the closest city"
     putStrLn "0: Close"
-    option <- getLine
-    executeOption option testData
+    choice <- getLine
+    completeChoice choice testData
 
 
 
-executeOption :: String -> [City] -> IO ()
-executeOption "1" citiesList = do
+completeChoice :: String -> [City] -> IO ()
+completeChoice "1" citiesList = do
   putStrLn (citiesToString citiesList)
-  startMenu citiesList
+  choices citiesList
 
 
-executeOption "2" citiesList = do
+completeChoice "2" citiesList = do
     putStrLn "What city?"
     city <- getLine
     let cityName = read city :: String
@@ -216,20 +216,20 @@ executeOption "2" citiesList = do
     populationInt <- getLine
     let popFigure = read populationInt :: Int
     putStrLn (pop citiesList cityName popFigure)
-    startMenu citiesList
+    choices citiesList
 
-executeOption "3" citiesList = do
+completeChoice "3" citiesList = do
     putStrLn (showCities citiesList)
-    startMenu citiesList
+    choices citiesList
 
-executeOption "4" citiesList = do
+completeChoice"4" citiesList = do
     putStrLn "Please enter 10 population figures in a list to update the population of all cities"
     popLists <- getLine
     let listOfPops = read popLists :: [Int]
     putStrLn (showCities(updatePopulations citiesList listOfPops))
-    startMenu citiesList
+    choices citiesList
 
-executeOption "5" citiesList = do
+completeChoice "5" citiesList = do
     putStrLn "Please enter a city name"
     nameStr <- getLine
     let nameOfCity = read nameStr :: String
@@ -243,16 +243,16 @@ executeOption "5" citiesList = do
     populationL <- getLine
     let listPops = read populationL :: [Int]
     putStrLn (showCities(addCity citiesList nameOfCity n e listPops))
-    startMenu citiesList
+    choices citiesList
 
-executeOption "6" citiesList = do
+completeChoice "6" citiesList = do
     putStrLn "Please enter the city you want to check the yearly increase on."
     cityChoice <- getLine
     let cityName = read cityChoice :: String
     print (yearlyIncrease testData cityName)
-    startMenu citiesList
+    choices citiesList
 
-executeOption "7" citiesList = do
+completeChoice "7" citiesList = do
     putStrLn "Please enter the north coordinates. "
     n <- getLine
     let north = read n :: Int
@@ -263,20 +263,20 @@ executeOption "7" citiesList = do
     minPop <- getLine
     let minPopulation = read minPop :: Int
     putStrLn (closestCity citiesList north south minPopulation)
-    startMenu citiesList
+    choices citiesList
 
-executeOption "0" citiesList = do
+completeChoice "0" citiesList = do
     saveCities citiesList
 
-executeOption _ citiesList = do
+completeChoice _ citiesList = do
     putStrLn "\n"
     putStrLn "Please enter a choice from 1 - 7"
-    startMenu citiesList
+    choices citiesList
 
 main :: IO ()
 main = do
     citiesList <- loadCities
-    startMenu citiesList
+    choices citiesList
 
 
 --
