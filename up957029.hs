@@ -244,10 +244,13 @@ startMenu citiesList = do
     option <- getLine
     executeOption option testData
 
+
+
 executeOption :: String -> [City] -> IO ()
 executeOption "1" citiesList = do
   putStrLn (citiesToString citiesList)
   startMenu citiesList
+
 
 executeOption "2" citiesList = do
     putStrLn "What city?"
@@ -304,6 +307,14 @@ executeOption "7" citiesList = do
     minPop <- getLine
     let minPopulation = read minPop :: Int
     putStrLn (closestCity citiesList north south minPopulation)
+    startMenu citiesList
+
+executeOption "0" citiesList = do
+    saveCities citiesList
+
+executeOption _ citiesList = do
+    putStrLn "Please enter a choice from 1 - 7"
+    startMenu citiesList
 
 
 
